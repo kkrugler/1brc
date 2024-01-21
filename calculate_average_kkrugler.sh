@@ -21,3 +21,4 @@
 
 JAVA_OPTS=""
 time java $JAVA_OPTS --class-path target/average-1.0.0-SNAPSHOT.jar dev.morling.onebrc.CalculateAverage_kkrugler
+# time target/CalculateAverage_kkrugler_image
