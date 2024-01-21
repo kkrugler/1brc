@@ -22,6 +22,11 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
+if [ -f measurements.txt ]; then
+    echo "Saving existing measurements.txt"
+    mv measurements.txt measurements.bak
+fi
+
 for sample in $(ls src/test/resources/samples/*.txt); do
   echo "Validating calculate_average_$1.sh -- $sample"
 
@@ -31,3 +36,9 @@ for sample in $(ls src/test/resources/samples/*.txt); do
   diff <("./calculate_average_$1.sh") ${sample%.txt}.out
 done
 rm measurements.txt
+
+if [ -f measurements.bak ]; then
+    echo "Restoring existing measurements.txt"
+    mv measurements.bak measurements.txt
+fi
+
