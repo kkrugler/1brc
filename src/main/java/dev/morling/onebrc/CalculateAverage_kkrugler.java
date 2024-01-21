@@ -250,7 +250,8 @@ public class CalculateAverage_kkrugler {
 
         private SeekableByteChannel channel;
         // TODO - use buffer.get(), not buffer.get(offset)
-        private ByteBuffer buffer;
+        private ByteBuffer directBuffer;
+        private byte[] buffer;
 
         public NIOFileReader(Path filePath) throws IOException {
             channel = Files.newByteChannel(filePath, StandardOpenOption.READ);
@@ -259,7 +260,8 @@ public class CalculateAverage_kkrugler {
             // process the "last" entry, which will always extend into the next
             // block (unless we're the very last block). This works because we
             // always skip the first entry, unless we're the first block.
-            buffer = ByteBuffer.allocateDirect(BUFFER_SIZE + MAX_LINE_LENGTH);
+            directBuffer = ByteBuffer.allocateDirect(BUFFER_SIZE + MAX_LINE_LENGTH);
+            buffer = new byte[BUFFER_SIZE + MAX_LINE_LENGTH];
         }
 
         public boolean process(long startOffset, StationMap map) throws IOException {
@@ -268,30 +270,32 @@ public class CalculateAverage_kkrugler {
             }
 
             channel.position(startOffset);
-            long bytesRead = channel.read(buffer);
-            buffer.rewind();
+            long bytesRead = channel.read(directBuffer);
+            directBuffer.rewind();
 
             // Our limit is either set by the true end of file, or we don't want
             // to read another entry once we've processed the next entry in the buffer.
             long readLimit = Math.min(bytesRead, BUFFER_SIZE + 1);
+
+            directBuffer.get(buffer, 0, (int) bytesRead);
 
             int readPointer = 0;
             byte curByte = 0;
             if (startOffset > 0) {
                 // Skip first entry if we're not the first block. We assume that
                 // we have enough data for at least one entry.
-                while ((curByte = buffer.get(readPointer++)) != NEW_LINE) {
+                while ((curByte = buffer[readPointer++]) != NEW_LINE) {
                     // Skip the first entry in our block
                 }
             }
 
             while (readPointer < readLimit) {
-                while ((curByte = buffer.get(readPointer++)) != SEMI_COLON) {
+                while ((curByte = buffer[readPointer++]) != SEMI_COLON) {
                     map.addNameByte(curByte);
                 }
 
                 double curValue = 0;
-                curByte = buffer.get(readPointer++);
+                curByte = buffer[readPointer++];
                 double sign = 1.0;
                 if (curByte == (byte) '-') {
                     sign = -1.0;
@@ -300,15 +304,15 @@ public class CalculateAverage_kkrugler {
                     curValue = curByte - (byte) '0';
                 }
 
-                while ((curByte = buffer.get(readPointer++)) != DECIMAL) {
+                while ((curByte = buffer[readPointer++]) != DECIMAL) {
                     curValue = (curValue * 10.0) + (curByte - (byte) '0');
                 }
 
-                curValue += (buffer.get(readPointer++) - (byte) '0') / 10.0;
+                curValue += (buffer[readPointer++] - (byte) '0') / 10.0;
                 curValue *= sign;
 
                 // Get rid of newline
-                buffer.get(readPointer++);
+                readPointer++;
 
                 MeasurementAggregator curResult = map.getWithCurName();
                 if (curResult == null) {
