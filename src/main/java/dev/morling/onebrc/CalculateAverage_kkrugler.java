@@ -39,7 +39,7 @@ public class CalculateAverage_kkrugler {
     private static final String FILE = "./measurements.txt";
 
     private static final int NUM_THREADS = 20;
-    private static final int BUFFER_SIZE = 128 * 1024 * 1024;
+    private static final int BUFFER_SIZE = 16 * 1024 * 1024;
 
     private static final int NUM_STATION_NAMES = 10_000;
 
@@ -290,6 +290,8 @@ public class CalculateAverage_kkrugler {
             }
 
             while (readPointer < readLimit) {
+                // We know there's at least one character in the name
+                map.addNameByte(buffer[readPointer++]);
                 while ((curByte = buffer[readPointer++]) != SEMI_COLON) {
                     map.addNameByte(curByte);
                 }
@@ -299,6 +301,7 @@ public class CalculateAverage_kkrugler {
                 double sign = 1.0;
                 if (curByte == (byte) '-') {
                     sign = -1.0;
+                    curValue = buffer[readPointer++] - (byte) '0';
                 }
                 else {
                     curValue = curByte - (byte) '0';
