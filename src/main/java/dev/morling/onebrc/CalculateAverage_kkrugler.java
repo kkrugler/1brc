@@ -38,8 +38,8 @@ public class CalculateAverage_kkrugler {
 
     private static final String FILE = "./measurements.txt";
 
-    private static final int NUM_THREADS = 20;
-    private static final int BUFFER_SIZE = 16 * 1024 * 1024;
+    private static final int DEFAULT_NUM_THREADS = 8;
+    private static final int DEFAULT_BUFFER_SIZE_MB = 32;
 
     private static final int NUM_STATION_NAMES = 10_000;
 
@@ -62,7 +62,6 @@ public class CalculateAverage_kkrugler {
         }
     };
 
-    // TODO - use long = actual * 10
     private static class MeasurementAggregator {
         private double min = Double.POSITIVE_INFINITY;
         private double max = Double.NEGATIVE_INFINITY;
@@ -74,23 +73,31 @@ public class CalculateAverage_kkrugler {
         // System.out.print("Press return when profiling is ready...");
         // readInputLine();
 
+        int numThreads = DEFAULT_NUM_THREADS;
+        int bufferSizeMB = DEFAULT_BUFFER_SIZE_MB;
+        if (args.length > 0) {
+            numThreads = Integer.parseInt(args[0]);
+            bufferSizeMB = Integer.parseInt(args[1]);
+        }
+        final int bufferSize = bufferSizeMB  * 1024 * 1024;
+        
         Map<String, MeasurementAggregator> globalMap = new HashMap<>(NUM_STATION_NAMES);
 
         final Path filePath = Paths.get(FILE);
-        final CountDownLatch latch = new CountDownLatch(NUM_THREADS);
+        final CountDownLatch latch = new CountDownLatch(numThreads);
         final AtomicLong curOffset = new AtomicLong(0);
 
-        for (int i = 0; i < NUM_THREADS; i++) {
+        for (int i = 0; i < numThreads; i++) {
             Thread t = new Thread(new Runnable() {
 
                 @Override
                 public void run() {
                     NIOFileReader reader = null;
                     try {
-                        reader = new NIOFileReader(filePath);
+                        reader = new NIOFileReader(filePath, bufferSize);
                         StationMap map = new StationMap(NUM_STATION_NAMES);
 
-                        while (reader.process(curOffset.getAndAdd(BUFFER_SIZE), map)) {
+                        while (reader.process(curOffset.getAndAdd(bufferSize), map)) {
 
                         }
 
@@ -252,16 +259,18 @@ public class CalculateAverage_kkrugler {
         // TODO - use buffer.get(), not buffer.get(offset)
         private ByteBuffer directBuffer;
         private byte[] buffer;
-
-        public NIOFileReader(Path filePath) throws IOException {
+        private int bufferSize;
+        
+        public NIOFileReader(Path filePath, int bufferSize) throws IOException {
             channel = Files.newByteChannel(filePath, StandardOpenOption.READ);
-
+            this.bufferSize = bufferSize;
+            
             // We try to read MAX_LINE_LENGTH more bytes, so that we can always
             // process the "last" entry, which will always extend into the next
             // block (unless we're the very last block). This works because we
             // always skip the first entry, unless we're the first block.
-            directBuffer = ByteBuffer.allocateDirect(BUFFER_SIZE + MAX_LINE_LENGTH);
-            buffer = new byte[BUFFER_SIZE + MAX_LINE_LENGTH];
+            directBuffer = ByteBuffer.allocateDirect(bufferSize + MAX_LINE_LENGTH);
+            buffer = new byte[bufferSize + MAX_LINE_LENGTH];
         }
 
         public boolean process(long startOffset, StationMap map) throws IOException {
@@ -275,7 +284,7 @@ public class CalculateAverage_kkrugler {
 
             // Our limit is either set by the true end of file, or we don't want
             // to read another entry once we've processed the next entry in the buffer.
-            long readLimit = Math.min(bytesRead, BUFFER_SIZE + 1);
+            long readLimit = Math.min(bytesRead, bufferSize + 1);
 
             directBuffer.get(buffer, 0, (int) bytesRead);
 
