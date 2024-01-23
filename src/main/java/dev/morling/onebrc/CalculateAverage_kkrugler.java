@@ -79,8 +79,8 @@ public class CalculateAverage_kkrugler {
             numThreads = Integer.parseInt(args[0]);
             bufferSizeMB = Integer.parseInt(args[1]);
         }
-        final int bufferSize = bufferSizeMB  * 1024 * 1024;
-        
+        final int bufferSize = bufferSizeMB * 1024 * 1024;
+
         Map<String, MeasurementAggregator> globalMap = new HashMap<>(NUM_STATION_NAMES);
 
         final Path filePath = Paths.get(FILE);
@@ -158,7 +158,7 @@ public class CalculateAverage_kkrugler {
         private byte[] nameBuffer;
         private int curNameStart;
         private int curNameEnd;
-        private int curNameHashCode;
+        private long curNameHashCode;
 
         private StationNameKey tempKey;
 
@@ -183,8 +183,8 @@ public class CalculateAverage_kkrugler {
             int h = (int) b;
 
             curNameHashCode += h & 0x0FFL;
-            curNameHashCode += (curNameHashCode << 10);
-            curNameHashCode ^= (curNameHashCode >> 6);
+            curNameHashCode += (curNameHashCode << 20);
+            curNameHashCode ^= (curNameHashCode >> 12);
         }
 
         public void initTempKey() {
@@ -192,9 +192,9 @@ public class CalculateAverage_kkrugler {
             tempKey.length = curNameEnd - curNameStart;
             tempKey.hashCode = curNameHashCode;
 
-            tempKey.hashCode += (tempKey.hashCode << 3);
-            tempKey.hashCode ^= (tempKey.hashCode >> 11);
-            tempKey.hashCode += (tempKey.hashCode << 15);
+            tempKey.hashCode += (tempKey.hashCode << 6);
+            tempKey.hashCode ^= (tempKey.hashCode >> 22);
+            tempKey.hashCode += (tempKey.hashCode << 30);
         }
 
         public MeasurementAggregator getWithCurName() {
@@ -221,7 +221,7 @@ public class CalculateAverage_kkrugler {
         public class StationNameKey {
             private int offset;
             private int length;
-            private int hashCode;
+            private long hashCode;
 
             public StationNameKey() {
             }
@@ -238,7 +238,7 @@ public class CalculateAverage_kkrugler {
 
             @Override
             public int hashCode() {
-                return hashCode;
+                return (int) hashCode;
             }
 
             @Override
@@ -260,11 +260,11 @@ public class CalculateAverage_kkrugler {
         private ByteBuffer directBuffer;
         private byte[] buffer;
         private int bufferSize;
-        
+
         public NIOFileReader(Path filePath, int bufferSize) throws IOException {
             channel = Files.newByteChannel(filePath, StandardOpenOption.READ);
             this.bufferSize = bufferSize;
-            
+
             // We try to read MAX_LINE_LENGTH more bytes, so that we can always
             // process the "last" entry, which will always extend into the next
             // block (unless we're the very last block). This works because we
