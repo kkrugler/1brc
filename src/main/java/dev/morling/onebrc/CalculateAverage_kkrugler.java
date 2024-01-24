@@ -39,7 +39,7 @@ public class CalculateAverage_kkrugler {
     private static final String FILE = "./measurements.txt";
 
     private static final int DEFAULT_NUM_THREADS = 8;
-    private static final int DEFAULT_BUFFER_SIZE_MB = 32;
+    private static final int DEFAULT_BUFFER_SIZE_KB = 512;
 
     private static final int NUM_STATION_NAMES = 10_000;
 
@@ -69,17 +69,17 @@ public class CalculateAverage_kkrugler {
         private long count;
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         // System.out.print("Press return when profiling is ready...");
         // readInputLine();
 
         int numThreads = DEFAULT_NUM_THREADS;
-        int bufferSizeMB = DEFAULT_BUFFER_SIZE_MB;
+        int bufferSizeKB = DEFAULT_BUFFER_SIZE_KB;
         if (args.length > 0) {
             numThreads = Integer.parseInt(args[0]);
-            bufferSizeMB = Integer.parseInt(args[1]);
+            bufferSizeKB = Integer.parseInt(args[1]);
         }
-        final int bufferSize = bufferSizeMB * 1024 * 1024;
+        final int bufferSize = bufferSizeKB * 1024;
 
         Map<String, MeasurementAggregator> globalMap = new HashMap<>(NUM_STATION_NAMES);
 
@@ -143,7 +143,7 @@ public class CalculateAverage_kkrugler {
                 results.put(e.getKey(), new ResultRow(ma.min, ma.sum / ma.count, ma.max));
             }
 
-            System.out.println(results);
+            // System.out.println(results);
         }
         catch (InterruptedException e1) {
             // TODO Auto-generated catch block
