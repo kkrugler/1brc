@@ -19,6 +19,10 @@
 # source "$HOME/.sdkman/bin/sdkman-init.sh"
 # sdk use java 21.0.1-graal 1>&2
 
-JAVA_OPTS=""
-time java $JAVA_OPTS --class-path target/average-1.0.0-SNAPSHOT.jar dev.morling.onebrc.CalculateAverage_kkrugler
-# time target/CalculateAverage_kkrugler_image
+if [ -f target/CalculateAverage_kkrugler_image ]; then
+    echo "Picking up existing native image 'target/CalculateAverage_kkrugler_image', delete the file to select JVM mode." 1>&2
+    target/CalculateAverage_kkrugler_image
+else
+	JAVA_OPTS=""
+	java $JAVA_OPTS --class-path target/average-1.0.0-SNAPSHOT.jar dev.morling.onebrc.CalculateAverage_kkrugler
+fi
