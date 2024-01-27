@@ -39,7 +39,7 @@ public class CalculateAverage_kkrugler {
     private static final String FILE = "./measurements.txt";
 
     private static final int DEFAULT_NUM_THREADS = 8;
-    private static final int DEFAULT_BUFFER_SIZE_KB = 256;
+    private static final int DEFAULT_BUFFER_SIZE_KB = 1;
 
     private static final int NUM_STATION_NAMES = 10_000;
 
