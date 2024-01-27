@@ -19,7 +19,7 @@
 # source "$HOME/.sdkman/bin/sdkman-init.sh"
 # sdk use java 21.0.1-graal 1>&2
 
-JAVA_OPTS=""
+JAVA_OPTS="-Xms2g -Xmx2g"
 java $JAVA_OPTS --class-path target/average-1.0.0-SNAPSHOT.jar \
-    dev.morling.onebrc.CalculateAverage_kkrugler_optimize 8 32 128 4096
+    dev.morling.onebrc.CalculateAverage_kkrugler_optimize 8 8 1 32
 # time target/CalculateAverage_kkrugler_image

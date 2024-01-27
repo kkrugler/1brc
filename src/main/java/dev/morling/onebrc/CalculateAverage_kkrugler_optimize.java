@@ -22,14 +22,16 @@ public class CalculateAverage_kkrugler_optimize {
     public static void main(String[] args) {
         int minThreads = Integer.parseInt(args[0]);
         int maxThreads = Integer.parseInt(args[1]);
-        int minBlockSizeMB = Integer.parseInt(args[2]);
-        int maxBlockSizeMB = Integer.parseInt(args[3]);
+        int minBlockSizeKB = Integer.parseInt(args[2]);
+        int maxBlockSizeKB = Integer.parseInt(args[3]);
+
+        System.out.format("Testing with %d to %d threads and %dKB to %dKB memory\n", minThreads, maxThreads, minBlockSizeKB, maxBlockSizeKB);
 
         for (int numThreads = minThreads; numThreads <= maxThreads; numThreads += 2) {
-            for (int blockSizeMB = minBlockSizeMB; blockSizeMB <= maxBlockSizeMB; blockSizeMB *= 2) {
+            for (int blockSizeKB = minBlockSizeKB; blockSizeKB <= maxBlockSizeKB; blockSizeKB *= 2) {
                 long totalTime = 0;
                 for (int trial = 0; trial < NUM_TRIALS; trial++) {
-                    String[] testArgs = new String[]{ Integer.toString(numThreads), Integer.toString(blockSizeMB) };
+                    String[] testArgs = new String[]{ Integer.toString(numThreads), Integer.toString(blockSizeKB) };
 
                     long startTimeMS = System.currentTimeMillis();
                     CalculateAverage_kkrugler.main(testArgs);
@@ -37,7 +39,7 @@ public class CalculateAverage_kkrugler_optimize {
                     totalTime += (endTimeMS - startTimeMS);
                 }
 
-                System.out.format("%d/%d: %d\n", numThreads, blockSizeMB, totalTime / NUM_TRIALS);
+                System.out.format("%d/%d: %d\n", numThreads, blockSizeKB, totalTime / NUM_TRIALS);
             }
         }
 
