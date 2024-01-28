@@ -38,8 +38,9 @@ public class CalculateAverage_kkrugler {
 
     private static final String FILE = "./measurements.txt";
 
+    // Optimal for reading from RAM disk, no GraalVM, on Hetzner CCX33
     private static final int DEFAULT_NUM_THREADS = 8;
-    private static final int DEFAULT_BUFFER_SIZE_KB = 1;
+    private static final int DEFAULT_BUFFER_SIZE_KB = 4;
 
     private static final int NUM_STATION_NAMES = 10_000;
 
